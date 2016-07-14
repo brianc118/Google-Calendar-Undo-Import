@@ -14,5 +14,5 @@ created at exactly _Jan 1 2015 5:31pm_ will be deleted.
 ##Getting Started
 - To run the script you  must first install the **Google Client Library**
 Follow the steps here https://developers.google.com/google-apps/calendar/quickstart/python
-* **Remember to download client_secret.json from Google and place it in the same directory as
+ **Remember to download client_secret.json from Google and place it in the same directory as
 the script**
