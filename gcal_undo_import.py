@@ -84,7 +84,7 @@ def main(argv):
         
         events = [e for e in events if e['kind'] == 'calendar#event']
         for event in events:
-            print("{0}\t{1}\t{2}".format(i, (event.get('start', {}).get('date') if event.get('start', {}).get('date') != None else event.get('start', {}).get('dateTime')), event.get('summary')))
+            print(u"{0}\t{1}\t{2}".format(i, (event.get('start', {}).get('date') if event.get('start', {}).get('date') != None else event.get('start', {}).get('dateTime')), event.get('summary')))
             i += 1
 
         x = getUserInputIndex('\nSelect event by typing in the index', i)
@@ -93,7 +93,7 @@ def main(argv):
 
         for event in events:
             if event.get('created') == creation_date:
-                print("{0}\tDeleting {1}\t{2}".format(i, event.get('summary'), event.get('id')))
+                print(u"{0}\tDeleting {1}\t{2}".format(i, event.get('summary'), event.get('id')))
                 service.events().delete(calendarId=calendar_id, eventId=event.get('id')).execute()
                 i += 1
 
