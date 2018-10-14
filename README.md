@@ -1,4 +1,4 @@
-#Google Calendar Undo Import
+# Google Calendar Undo Import
 
 **Accidently imported an .ics into the wrong calendar?** Unfortunately, Google hasn't provided 
 a solution to undoing calendar imports. If you've imported the .ics into a primary calendar
@@ -11,7 +11,7 @@ to choose an entry from the calendar that reflects the time. For example, if you
 entry _"MATH2001"_ which was created on _Jan 1 2015 5:31pm_, then all entries in that calendar
 created at exactly _Jan 1 2015 5:31pm_ will be deleted.
 
-##Getting Started
+## Getting Started
 - To run the script you  must first install the **Google Client Library**
 Follow the steps here https://developers.google.com/google-apps/calendar/quickstart/python
  **Remember to download client_secret.json from Google and place it in the same directory as
