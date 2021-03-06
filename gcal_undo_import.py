@@ -113,8 +113,13 @@ def main(argv):
     for event in events:
         if event.get('created') == creation_date:
             print(u"{0}\tDeleting {1}\t{2}".format(i, event.get('summary'), event.get('id')))
-            service.events().delete(calendarId=calendar_id, eventId=event.get('id')).execute()
-            i += 1
+
+            try:
+                service.events().delete(calendarId=calendar_id, eventId=event.get('id')).execute()
+            except googleapiclient.errors.HttpError as e:
+                print(e)
+                continue
+        i += 1
 
     print('Deleted {0} entries'.format(i))
 
