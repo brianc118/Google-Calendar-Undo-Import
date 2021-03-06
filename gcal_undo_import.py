@@ -24,16 +24,19 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+import os
 import sys
 
-from oauth2client import client
-from googleapiclient import sample_tools
-
+import pickle
+import googleapiclient
+from googleapiclient.discovery import build
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
 
 def getUserInputIndex(msg, i):
     while True:
         print(msg)
-        x = input()
+        x = str(input())
         if x.isdigit():
             if int(x) < i:
                 break
@@ -44,65 +47,83 @@ def getUserInputIndex(msg, i):
     return x
 
 def main(argv):
-    # Authenticate and construct service.
-    service, flags = sample_tools.init(
-        argv, 'calendar', 'v3', __doc__, __file__,
-        scope='https://www.googleapis.com/auth/calendar')
+    SCOPES = ['https://www.googleapis.com/auth/calendar']
 
-    try:
-        page_token = None
-        i = 0
-        calendars = []
-        events = []
+    creds = None
+    # The file token.pickle stores the user's access and refresh tokens, and is
+    # created automatically when the authorization flow completes for the first
+    # time.
+    if os.path.exists('token.pickle'):
+        with open('token.pickle', 'rb') as token:
+            creds = pickle.load(token)
+    # If there are no (valid) credentials available, let the user log in.
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file(
+                'credentials.json', SCOPES)
+            creds = flow.run_local_server(port=0)
+        # Save the credentials for the next run
+        with open('token.pickle', 'wb') as token:
+            pickle.dump(creds, token)# Authenticate and construct service.
+    service = build('calendar', 'v3', credentials=creds)
+    
+    pageToken = None
+    i = 0
+    calendars = []
+    events = []
 
-        while True:
-            calendar_list = service.calendarList().list(pageToken=page_token).execute()
-            calendars.extend(calendar_list['items'])
-            print("Loading calendars")
-            page_token = calendar_list.get('nextPageToken')
-            if not page_token:
-                break
+    while True:
+        calendarList = service.calendarList().list(pageToken=pageToken).execute()
+        calendars.extend(calendarList['items'])
+        print("Loading calendars")
+        pageToken = calendarList.get('nextPageToken')
+        if not pageToken:
+            break
 
-        calendars = [c for c in calendars if c['kind'] == 'calendar#calendarListEntry']
+    calendars = [c for c in calendars if c['kind'] == 'calendar#calendarListEntry']
 
-        for calendar in calendars:
-            print('{0}\t{1}'.format(i, calendar['summary']))
-            i += 1
+    for calendar in calendars:
+        print('{0}\t{1}'.format(i, calendar['summary']))
+        i += 1
 
-        x = getUserInputIndex('\nSelect calendar by typing in the index', i)
-        calendar_id = calendars[int(x)].get('id')
-        print("Selected '{0}'".format(calendars[int(x)].get('summary')))
-        i = 0
+    x = getUserInputIndex('\nSelect calendar by typing in the index', i)
+    calendarId = calendars[int(x)].get('id')
+    print("Selected '{0}'".format(calendars[int(x)].get('summary')))
+    i = 0
 
-        while True:
-            ev = service.events().list(calendarId=calendar_id, pageToken=page_token).execute()
-            events.extend(ev['items'])
-            page_token = ev.get('nextPageToken')
-            print("Loading entries")
-            if not page_token:
-                break
-        
-        events = [e for e in events if e['kind'] == 'calendar#event']
-        for event in events:
-            print(u"{0}\t{1}\t{2}".format(i, (event.get('start', {}).get('date') if event.get('start', {}).get('date') != None else event.get('start', {}).get('dateTime')), event.get('summary')))
-            i += 1
+    while True:
+        ev = service.events().list(calendarId=calendarId, pageToken=pageToken).execute()
+        events.extend(ev['items'])
+        pageToken = ev.get('nextPageToken')
+        print("Loading entries")
+        if not pageToken:
+            break
 
-        x = getUserInputIndex('\nSelect event by typing in the index', i)
-        creation_date = events[int(x)].get('created')
-        i = 0
+    events = [e for e in events if e['kind'] == 'calendar#event']
+    for event in events:
+        print(u"{0}\t{1}\t{2}".format(i, (event.get('start', {}).get('date') if event.get('start', {}).get('date') != None else event.get('start', {}).get('dateTime')), event.get('summary')))
+        i += 1
 
-        for event in events:
-            if event.get('created') == creation_date:
-                print(u"{0}\tDeleting {1}\t{2}".format(i, event.get('summary'), event.get('id')))
-                service.events().delete(calendarId=calendar_id, eventId=event.get('id')).execute()
-                i += 1
+    x = getUserInputIndex('\nSelect event by typing in the index', i)
+    creationDate = events[int(x)].get('created')
+    i = 0
 
-        print('Deleted {0} entries'.format(i))
+    for event in events:
+        if event.get('created') == creationDate:
+            print(u"{0}\tDeleting {1}\t{2}".format(i, event.get('summary'), event.get('id')))
 
-    except client.AccessTokenRefreshError:
-        print('The credentials have been revoked or expired, please re-run'
-              'the application to re-authorize.')
+            try:
+                service.events().delete(calendarId=calendarId, eventId=event.get('id')).execute()
+            except googleapiclient.errors.HttpError as e:
+                print(e)
+                continue
+        i += 1
 
+    print('Deleted {0} entries'.format(i))
+
+   
 if __name__ == '__main__':
     main(sys.argv)
 
