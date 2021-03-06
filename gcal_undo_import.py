@@ -69,17 +69,17 @@ def main(argv):
             pickle.dump(creds, token)# Authenticate and construct service.
     service = build('calendar', 'v3', credentials=creds)
     
-    page_token = None
+    pageToken = None
     i = 0
     calendars = []
     events = []
 
     while True:
-        calendar_list = service.calendarList().list(pageToken=page_token).execute()
-        calendars.extend(calendar_list['items'])
+        calendarList = service.calendarList().list(pageToken=pageToken).execute()
+        calendars.extend(calendarList['items'])
         print("Loading calendars")
-        page_token = calendar_list.get('nextPageToken')
-        if not page_token:
+        pageToken = calendarList.get('nextPageToken')
+        if not pageToken:
             break
 
     calendars = [c for c in calendars if c['kind'] == 'calendar#calendarListEntry']
@@ -89,16 +89,16 @@ def main(argv):
         i += 1
 
     x = getUserInputIndex('\nSelect calendar by typing in the index', i)
-    calendar_id = calendars[int(x)].get('id')
+    calendarId = calendars[int(x)].get('id')
     print("Selected '{0}'".format(calendars[int(x)].get('summary')))
     i = 0
 
     while True:
-        ev = service.events().list(calendarId=calendar_id, pageToken=page_token).execute()
+        ev = service.events().list(calendarId=calendarId, pageToken=pageToken).execute()
         events.extend(ev['items'])
-        page_token = ev.get('nextPageToken')
+        pageToken = ev.get('nextPageToken')
         print("Loading entries")
-        if not page_token:
+        if not pageToken:
             break
 
     events = [e for e in events if e['kind'] == 'calendar#event']
@@ -107,15 +107,15 @@ def main(argv):
         i += 1
 
     x = getUserInputIndex('\nSelect event by typing in the index', i)
-    creation_date = events[int(x)].get('created')
+    creationDate = events[int(x)].get('created')
     i = 0
 
     for event in events:
-        if event.get('created') == creation_date:
+        if event.get('created') == creationDate:
             print(u"{0}\tDeleting {1}\t{2}".format(i, event.get('summary'), event.get('id')))
 
             try:
-                service.events().delete(calendarId=calendar_id, eventId=event.get('id')).execute()
+                service.events().delete(calendarId=calendarId, eventId=event.get('id')).execute()
             except googleapiclient.errors.HttpError as e:
                 print(e)
                 continue
