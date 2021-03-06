@@ -36,7 +36,7 @@ from google.auth.transport.requests import Request
 def getUserInputIndex(msg, i):
     while True:
         print(msg)
-        x = input()
+        x = str(input())
         if x.isdigit():
             if int(x) < i:
                 break
